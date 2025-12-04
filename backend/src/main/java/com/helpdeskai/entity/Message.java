@@ -80,8 +80,9 @@ public class Message {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ChunkMetadataDTO {
+        private Long documentId;
+        private String documentName;
         private Integer page;
         private String section;
-        private String documentName;
     }
 }

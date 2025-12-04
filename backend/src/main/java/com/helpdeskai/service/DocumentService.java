@@ -17,7 +17,7 @@ import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
-import org.pgvector.PGvector;
+import com.pgvector.PGvector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -108,7 +108,7 @@ public class DocumentService {
                     .filename(document.getFilename())
                     .fileSize(document.getFileSize())
                     .mimeType(document.getMimeType())
-                    .status(document.getStatus())
+                    .status(document.getStatus().name())
                     .totalChunks(0)
                     .uploadedAt(document.getUploadedAt())
                     .message("Documento enviado com sucesso. Processamento iniciado.")
@@ -310,7 +310,7 @@ public class DocumentService {
                 .fileSize(document.getFileSize())
                 .mimeType(document.getMimeType())
                 .totalChunks(document.getTotalChunks())
-                .status(document.getStatus())
+                .status(document.getStatus().name())
                 .uploadedAt(document.getUploadedAt())
                 .build();
     }

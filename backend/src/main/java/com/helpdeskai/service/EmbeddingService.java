@@ -2,7 +2,7 @@ package com.helpdeskai.service;
 
 import com.helpdeskai.exception.EmbeddingException;
 import lombok.extern.slf4j.Slf4j;
-import org.pgvector.PGvector;
+import com.pgvector.PGvector;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;

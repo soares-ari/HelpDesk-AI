@@ -1,7 +1,6 @@
 package com.helpdeskai.service;
 
 import com.helpdeskai.dto.ChatRequest;
-import com.helpdeskai.dto.ChatResponse;
 import com.helpdeskai.entity.Chunk;
 import com.helpdeskai.entity.Conversation;
 import com.helpdeskai.entity.Message;
@@ -13,12 +12,11 @@ import com.helpdeskai.exception.ResourceNotFoundException;
 import com.helpdeskai.repository.ChunkRepository;
 import com.helpdeskai.repository.ConversationRepository;
 import com.helpdeskai.repository.MessageRepository;
+import com.pgvector.PGvector;
 import lombok.extern.slf4j.Slf4j;
-import org.pgvector.PGvector;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -243,7 +241,7 @@ public class ChatService {
                     new UserMessage(contextPrompt)
             ));
 
-            ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
+            org.springframework.ai.chat.model.ChatResponse response = chatClient.prompt(prompt).call().chatResponse();
 
             if (response == null || response.getResults().isEmpty()) {
                 throw new ChatException("Resposta vazia do LLM");
