@@ -7,6 +7,7 @@ import com.helpdeskai.entity.User;
 import com.helpdeskai.exception.AuthenticationException;
 import com.helpdeskai.exception.ResourceNotFoundException;
 import com.helpdeskai.repository.UserRepository;
+import com.helpdeskai.security.JwtTokenProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 /**
- * Serviço responsável por autenticação e registro de usuários.
- *
- * NOTA: Este service depende de JwtTokenProvider que ainda não foi implementado.
- * Por enquanto, os métodos que precisam de JWT estão com TODOs marcados.
+ * Service responsible for user authentication and registration.
  */
 @Service
 @Slf4j
@@ -26,13 +24,14 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    // TODO: Adicionar JwtTokenProvider quando implementar camada de security
-    // private final JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public AuthService(UserRepository userRepository,
-                      PasswordEncoder passwordEncoder) {
+                      PasswordEncoder passwordEncoder,
+                      JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     /**
@@ -71,8 +70,8 @@ public class AuthService {
 
         log.info("Usuário registrado com sucesso. ID: {}, Email: {}", user.getId(), user.getEmail());
 
-        // TODO: Gerar token JWT quando JwtTokenProvider estiver implementado
-        String token = generateTemporaryToken(user);
+        // Generate JWT token
+        String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)
@@ -108,8 +107,8 @@ public class AuthService {
 
         log.info("Login bem-sucedido para usuário ID: {}", user.getId());
 
-        // TODO: Gerar token JWT quando JwtTokenProvider estiver implementado
-        String token = generateTemporaryToken(user);
+        // Generate JWT token
+        String token = jwtTokenProvider.generateToken(user.getId(), user.getEmail());
 
         return AuthResponse.builder()
                 .token(token)
@@ -121,51 +120,26 @@ public class AuthService {
     }
 
     /**
-     * Obtém usuário a partir de um token JWT.
+     * Gets user from JWT token.
      *
-     * @param token Token JWT
-     * @return Usuário correspondente
+     * @param token JWT token
+     * @return User entity
      */
     @Transactional(readOnly = true)
     public User getUserFromToken(String token) {
-        // TODO: Implementar quando JwtTokenProvider estiver pronto
-        // Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
 
-        // Por enquanto, retorna erro
-        throw new AuthenticationException(
-                "Método getUserFromToken não implementado - aguardando JwtTokenProvider");
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     /**
-     * Valida se um token JWT é válido.
+     * Validates a JWT token.
      *
-     * @param token Token JWT
-     * @return true se válido, false caso contrário
+     * @param token JWT token
+     * @return true if valid, false otherwise
      */
     public boolean validateToken(String token) {
-        // TODO: Implementar quando JwtTokenProvider estiver pronto
-        // return jwtTokenProvider.validateToken(token);
-
-        // Por enquanto, retorna false
-        log.warn("Método validateToken não implementado - aguardando JwtTokenProvider");
-        return false;
-    }
-
-    /**
-     * MÉTODO TEMPORÁRIO: Gera um "token" simples para testes.
-     * DEVE SER REMOVIDO quando JwtTokenProvider estiver implementado.
-     *
-     * @param user Usuário
-     * @return Token temporário (não é JWT real)
-     */
-    private String generateTemporaryToken(User user) {
-        // ATENÇÃO: Isto NÃO é seguro! É apenas para permitir compilação e testes básicos
-        // Um JWT real deve ser gerado com jjwt library
-        String tempToken = String.format("TEMP_TOKEN_%d_%s", user.getId(), user.getEmail());
-
-        log.warn("⚠️ USANDO TOKEN TEMPORÁRIO NÃO SEGURO: {}", tempToken);
-        log.warn("⚠️ IMPLEMENTAR JwtTokenProvider ANTES DE USAR EM PRODUÇÃO!");
-
-        return tempToken;
+        return jwtTokenProvider.validateToken(token);
     }
 }
