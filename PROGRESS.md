@@ -31,14 +31,14 @@
 ### Estrutura de Pacotes Java
 ```
 com.helpdeskai/
-├── config/          (vazio - próximo passo)
-├── controller/      (vazio - próximo passo)
-├── service/         (vazio - próximo passo)
-├── repository/      ✅ 5 repositories criados
-├── entity/          ✅ 5 entidades criadas
-├── dto/             ✅ 7 DTOs criados
-├── security/        (vazio - próximo passo)
-├── exception/       (vazio - próximo passo)
+├── config/          ✅ 2 classes (SecurityConfig, AsyncConfig)
+├── controller/      ✅ 3 controllers (Auth, Document, Chat)
+├── service/         ✅ 5 services (Auth, Document, Chat, Chunking, Embedding)
+├── repository/      ✅ 5 repositories
+├── entity/          ✅ 5 entidades
+├── dto/             ✅ 7 DTOs
+├── security/        ✅ 3 classes (JwtTokenProvider, Filter, UserDetailsService)
+├── exception/       ✅ 6 classes (5 custom + GlobalExceptionHandler)
 └── HelpdeskAiApplication.java  ✅
 ```
 
@@ -65,91 +65,342 @@ com.helpdeskai/
 - [x] `DocumentUploadResponse.java` - Resposta de upload
 - [x] `DocumentDTO.java` - Representação de documento
 
-### Configuração
-- [x] `application.yml` - Configuração completa:
-  - Datasource (PostgreSQL porta 5433)
-  - Spring AI (OpenAI + pgvector)
-  - Chunking params (700 tokens, overlap 150)
-  - Retrieval params (top-k=5, threshold=0.7)
-  - JWT config
-  - Swagger
-  - Actuator
-  - Logging
-- [x] `.env.example` - Template de variáveis de ambiente
+## ✅ Fase 3: Services - Lógica de Negócio (CONCLUÍDA)
 
-### Classe Principal
-- [x] `HelpdeskAiApplication.java` - Classe main com banner
+### Services (5 classes)
+- [x] `ChunkingService.java` - Chunking semântico baseado em tokens
+  - Algoritmo: detecção de fronteiras de sentenças
+  - Configurável: 700 tokens, overlap 150, min 400, max 1000
+  - ~200 LOC
 
-## 🚧 Próximos Passos (Fase 2 continuação)
+- [x] `EmbeddingService.java` - Integração Spring AI OpenAI
+  - Geração de embeddings com retry (3 tentativas)
+  - Suporte a batch processing
+  - Conversão para PGvector
+  - ~150 LOC
 
-### Services (Lógica de Negócio)
-- [ ] `ChunkingService.java` - Chunking semântico adaptativo
-- [ ] `EmbeddingService.java` - Integração Spring AI OpenAI
-- [ ] `DocumentService.java` - Upload + extração (Tika) + processamento
-- [ ] `ChatService.java` - RAG: retrieval + prompt + LLM
-- [ ] `AuthService.java` - Registro + login + JWT
+- [x] `DocumentService.java` - Upload + extração + processamento
+  - Validação de arquivos (MIME type, tamanho <50MB)
+  - Extração de texto com Apache Tika
+  - Processamento assíncrono (@Async)
+  - Gerenciamento de documentos do usuário
+  - ~350 LOC
 
-### Security (JWT)
-- [ ] `JwtTokenProvider.java` - Gerar/validar tokens
-- [ ] `JwtAuthenticationFilter.java` - Interceptar requisições
-- [ ] `UserDetailsServiceImpl.java` - Carregar usuário do banco
-- [ ] `SecurityConfig.java` - Configurar endpoints públicos/protegidos
+- [x] `ChatService.java` - RAG: retrieval + prompt + LLM
+  - Pipeline RAG completo (8 passos)
+  - Busca vetorial com pgvector (top-k=5, threshold=0.7)
+  - Integração GPT-4 via Spring AI
+  - Geração de citações automáticas
+  - ~380 LOC
 
-### Controllers (REST API)
-- [ ] `AuthController.java` - POST /api/auth/register, /login
-- [ ] `DocumentController.java` - POST /api/documents/upload, GET /api/documents
-- [ ] `ChatController.java` - POST /api/chat
+- [x] `AuthService.java` - Registro + login + JWT
+  - Hash de senha com BCrypt (strength 12)
+  - Geração de JWT tokens
+  - Validação de usuários
+  - ~150 LOC
 
-### Exception Handling
-- [ ] `GlobalExceptionHandler.java` - @ControllerAdvice
-- [ ] `ResourceNotFoundException.java` - Custom exception
+### Exception Classes (5 classes)
+- [x] `ResourceNotFoundException.java` - Recursos não encontrados
+- [x] `DocumentProcessingException.java` - Erros em PDFs
+- [x] `EmbeddingException.java` - Erros de embeddings
+- [x] `ChatException.java` - Erros no pipeline RAG
+- [x] `AuthenticationException.java` - Erros de autenticação
 
-## 📊 Estatísticas
+**Total Services: ~1230 LOC**
 
-### Arquivos Criados: 25
-- Backend: 22 arquivos Java + 1 pom.xml + 1 application.yml + 1 .env.example
-- Docker: 2 arquivos (docker-compose.yml, init-db.sql)
-- Raiz: 3 arquivos (README.md, .gitignore, PROGRESS.md)
+## ✅ Fase 4: Security Layer (CONCLUÍDA)
 
-### Linhas de Código (aproximado): ~2000 linhas
-- Entidades: ~400 linhas
-- Repositories: ~300 linhas
-- DTOs: ~200 linhas
-- Configurações: ~250 linhas
-- SQL: ~100 linhas
-- Documentação: ~750 linhas
+### Security Classes (3 classes)
+- [x] `JwtTokenProvider.java` - Gerar/validar tokens JWT
+  - Usa jjwt library (io.jsonwebtoken)
+  - HS256 signing
+  - Expiration: 24 horas
+  - Issuer/Audience validation
+  - ~150 LOC
+
+- [x] `JwtAuthenticationFilter.java` - Interceptar requisições
+  - OncePerRequestFilter
+  - Extrai Bearer token do header
+  - Valida e autentica usuário
+  - ~90 LOC
+
+- [x] `UserDetailsServiceImpl.java` - Carregar usuário do banco
+  - Implementa UserDetailsService
+  - Suporta busca por ID ou email
+  - ~80 LOC
+
+### Configuration Classes (2 classes)
+- [x] `SecurityConfig.java` - Configurar endpoints públicos/protegidos
+  - SecurityFilterChain com JWT
+  - CORS para Angular frontend
+  - BCrypt PasswordEncoder
+  - Stateless session management
+  - Public endpoints: /api/auth/**, /api/docs/**, /actuator/health
+  - ~130 LOC
+
+- [x] `AsyncConfig.java` - Thread pool para @Async
+  - ThreadPoolTaskExecutor
+  - Core: 5 threads, Max: 10 threads
+  - Queue capacity: 100
+  - ~60 LOC
+
+**Total Security: ~510 LOC**
+
+## ✅ Fase 5: REST Controllers (CONCLUÍDA)
+
+### Controllers (3 classes)
+- [x] `AuthController.java` - Autenticação
+  - POST /api/auth/register - Registro de usuário
+  - POST /api/auth/login - Login
+  - GET /api/auth/validate - Validar token
+  - ~110 LOC
+
+- [x] `DocumentController.java` - Gerenciamento de documentos
+  - POST /api/documents/upload - Upload de PDF (multipart)
+  - GET /api/documents - Listar documentos do usuário
+  - GET /api/documents/{id} - Obter documento por ID
+  - DELETE /api/documents/{id} - Deletar documento
+  - ~130 LOC
+
+- [x] `ChatController.java` - Interface de chat RAG
+  - POST /api/chat - Enviar mensagem (RAG pipeline)
+  - GET /api/chat/conversations - Listar conversas
+  - GET /api/chat/conversations/{id}/messages - Obter mensagens
+  - DELETE /api/chat/conversations/{id} - Deletar conversa
+  - ~180 LOC
+
+### Exception Handler (1 classe)
+- [x] `GlobalExceptionHandler.java` - @ControllerAdvice
+  - Tratamento centralizado de erros
+  - Respostas HTTP padronizadas (ErrorResponse DTO)
+  - Handles: ResourceNotFound, Authentication, DocumentProcessing, etc
+  - Validação de campos (@Valid)
+  - File upload size exceeded
+  - ~230 LOC
+
+**Total Controllers: ~650 LOC**
+
+## 📊 Estatísticas Finais
+
+### Arquivos Criados: 40 arquivos Java
+- **Entidades**: 5 classes (~400 LOC)
+- **Repositories**: 5 interfaces (~300 LOC)
+- **DTOs**: 7 classes (~200 LOC)
+- **Services**: 5 classes (~1230 LOC)
+- **Exceptions**: 6 classes (~280 LOC)
+- **Security**: 3 classes (~320 LOC)
+- **Config**: 2 classes (~190 LOC)
+- **Controllers**: 3 classes (~420 LOC)
+- **Exception Handler**: 1 classe (~230 LOC)
+- **Main Class**: 1 classe (~20 LOC)
+
+### Linhas de Código Total: ~3,600 LOC (backend Java)
+- Configurações: ~250 LOC (pom.xml, application.yml)
+- SQL: ~100 LOC (init-db.sql)
+- Documentação: ~750 LOC (README, PROGRESS, etc)
+
+**Total Geral: ~4,700 LOC**
 
 ## 🎯 Status Geral
 
 **Infraestrutura**: 100% ✅
-**Backend Fundação**: 40% ✅ (entidades, repos, DTOs completos)
-**Backend Lógica**: 0% ⏳ (services, security, controllers pendentes)
-**Frontend**: 0% ⏳ (não iniciado)
-**Testes**: 0% ⏳ (não iniciado)
-**Deploy**: 0% ⏳ (não iniciado)
+**Backend Fundação**: 100% ✅ (entidades, repos, DTOs)
+**Backend Services**: 100% ✅ (lógica de negócio)
+**Backend Security**: 100% ✅ (JWT, autenticação)
+**Backend Controllers**: 100% ✅ (REST API)
+**Backend Exception Handling**: 100% ✅ (global handler)
 
-## 🚀 Como Continuar
+**Backend API**: 🎉 **95% COMPLETO** 🎉
 
-### Opção 1: Testar a Base Atual
-```bash
-# Você precisa ter Java 17+ e Maven instalados
-cd backend
-mvn clean compile
+### Pendente:
+**Testes**: 0% ⏳ (testes unitários + integração)
+**Frontend**: 0% ⏳ (Angular não iniciado)
+**Deploy**: 0% ⏳ (Railway + Vercel)
 
-# Se compilar com sucesso, a base está OK!
+## 🚀 Endpoints REST API Disponíveis
+
+### Autenticação (Público)
+```
+POST   /api/auth/register      - Criar conta
+POST   /api/auth/login         - Login
+GET    /api/auth/validate      - Validar token JWT
 ```
 
-### Opção 2: Criar Services (próximo)
-Seguir o plano e implementar:
-1. ChunkingService (chunking semântico)
-2. EmbeddingService (OpenAI embeddings)
-3. DocumentService (upload + Tika + chunking + embeddings)
-4. ChatService (busca vetorial + prompt + GPT-4)
+### Documentos (Autenticado - JWT required)
+```
+POST   /api/documents/upload   - Upload PDF (multipart/form-data)
+GET    /api/documents          - Listar documentos do usuário
+GET    /api/documents/{id}     - Obter documento específico
+DELETE /api/documents/{id}     - Deletar documento + chunks
+```
 
-### Opção 3: Seguir Manualmente
-Usar o plano em `~/.claude/plans/peppy-puzzling-garden.md` como guia e implementar com Claude Code/Copilot.
+### Chat RAG (Autenticado - JWT required)
+```
+POST   /api/chat                                    - Enviar mensagem
+GET    /api/chat/conversations                      - Listar conversas
+GET    /api/chat/conversations/{id}/messages        - Obter mensagens
+DELETE /api/chat/conversations/{id}                 - Deletar conversa
+```
+
+### Documentação
+```
+GET    /api/swagger-ui.html    - Swagger UI
+GET    /api/docs               - OpenAPI JSON
+```
+
+### Monitoring
+```
+GET    /actuator/health        - Health check
+GET    /actuator/info          - Info
+GET    /actuator/metrics       - Metrics
+GET    /actuator/prometheus    - Prometheus metrics
+```
+
+## 🔥 Features Implementadas
+
+### RAG Pipeline
+- ✅ Chunking semântico com detecção de sentenças
+- ✅ Embeddings OpenAI (text-embedding-3-small, 1536 dims)
+- ✅ Busca vetorial com pgvector (cosine similarity, HNSW index)
+- ✅ Integração GPT-4 Turbo via Spring AI
+- ✅ Citações automáticas com similarity scores
+- ✅ Processamento assíncrono de documentos
+
+### Security
+- ✅ JWT authentication (HS256, 24h expiration)
+- ✅ BCrypt password hashing (strength 12)
+- ✅ Stateless session management
+- ✅ CORS configurado para Angular
+- ✅ Public/Protected endpoints
+- ✅ User ownership verification
+
+### Error Handling
+- ✅ Global exception handler (@ControllerAdvice)
+- ✅ Standardized error responses
+- ✅ Field validation errors
+- ✅ HTTP status codes (200, 201, 204, 400, 401, 403, 404, 413, 422, 500)
+
+### Documentation
+- ✅ OpenAPI/Swagger integration
+- ✅ API documentation auto-generated
+- ✅ DTOs with validation annotations
+- ✅ Comprehensive code comments
+
+## 🧪 Como Testar o Backend
+
+### 1. Iniciar Banco de Dados
+```bash
+cd docker
+docker-compose up -d
+
+# Verificar pgvector
+docker exec helpdesk-ai-db psql -U postgres -d helpdesk_ai -c "\dx"
+```
+
+### 2. Configurar Variáveis de Ambiente
+Criar `backend/.env` ou configurar no sistema:
+```bash
+export OPENAI_API_KEY=sk-your-key-here
+export JWT_SECRET=your-256-bit-secret-key-change-in-production
+```
+
+Ou editar `backend/src/main/resources/application.yml`:
+```yaml
+spring:
+  ai:
+    openai:
+      api-key: sk-your-key-here
+
+jwt:
+  secret: your-256-bit-secret-key-here
+```
+
+### 3. Compilar e Executar Backend
+```bash
+cd backend
+mvn clean install
+mvn spring-boot:run
+```
+
+### 4. Testar Endpoints
+
+**Health Check:**
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+**Swagger UI:**
+```
+http://localhost:8080/api/swagger-ui.html
+```
+
+**Registrar Usuário:**
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123"
+  }'
+```
+
+**Login:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "test@example.com",
+    "password": "password123"
+  }'
+```
+
+## 📝 Próximos Passos
+
+### Opção 1: Testes Automatizados
+1. Testes unitários para Services (com Mockito)
+2. Testes de integração (com Testcontainers)
+3. Testes E2E para pipeline RAG
+4. Coverage report (JaCoCo)
+
+**Estimativa**: 2-3 dias de trabalho
+
+### Opção 2: Frontend Angular
+1. Setup projeto Angular 17+
+2. Componentes de autenticação
+3. Upload de documentos
+4. Interface de chat
+5. Integração com backend API
+
+**Estimativa**: 5-7 dias de trabalho
+
+### Opção 3: Deploy
+1. Deploy backend no Railway
+2. Deploy frontend no Vercel
+3. Configurar variáveis de ambiente
+4. Testar em produção
+
+**Estimativa**: 1 dia de trabalho
+
+### Opção 4: Melhorias e Features
+1. WebSockets para streaming de respostas
+2. Suporte a DOCX, TXT, Markdown
+3. OCR para PDFs escaneados
+4. Multi-tenancy (workspaces)
+5. Re-ranking com Cohere API
+
+## 🎓 Commits Realizados
+
+1. **chore: initial import** - Setup inicial do projeto
+2. **feat: implement backend services layer** - Services + Exceptions (~1500 LOC)
+3. **feat: implement security layer with JWT authentication** - Security + Config (~560 LOC)
+4. **feat: implement REST controllers and global exception handler** - Controllers + Handler (~650 LOC)
+
+**Total: 4 commits, ~4700 LOC**
 
 ---
 
 **Última atualização**: 2025-12-04
-**Tempo estimado para MVP completo**: 15-20 dias (seguindo o roadmap)
+**Backend Status**: 95% completo (apenas testes faltando)
+**Tempo total de desenvolvimento**: ~3-4 horas de implementação assistida
+**Próxima meta**: Testes ou Frontend Angular
