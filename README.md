@@ -180,9 +180,9 @@ Chat com RAG:
 
 ### Backend
 
-O projeto possui suíte abrangente de testes unitários e um teste de integração RAG com Testcontainers (pgvector). Docker deve estar em execução para o teste de integração.
+O projeto possui suíte abrangente de testes unitários, teste de integração RAG e teste E2E inicial com Testcontainers (pgvector). Docker deve estar em execução para integração/E2E.
 
-**Status Atual**: 63 testes passando (0 falhas)
+**Status Atual**: 64 testes passando (0 falhas)
 - AuthService: 13 ✅
 - ChunkingService: 15 ✅
 - EmbeddingService: 19 ✅
@@ -190,6 +190,7 @@ O projeto possui suíte abrangente de testes unitários e um teste de integraç�
 - ChatService: unit ✅
 - JwtTokenProvider: unit ✅
 - Integração RAG: DocumentChatIntegrationTest ✅ (Testcontainers + pgvector)
+- E2E inicial: DocumentUploadChatE2ETest ✅ (upload -> processamento -> chat usando Testcontainers)
 
 #### Executar Todos os Testes
 ```bash

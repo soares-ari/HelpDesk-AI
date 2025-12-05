@@ -192,7 +192,7 @@ com.helpdeskai/
 - **Config**: 2 classes (~190 LOC)
 - **Controllers**: 3 classes (~420 LOC)
 - **Exception Handler**: 1 classe (~230 LOC)
-- **Testes**: 7 classes (63 testes, incluindo integração)
+- **Testes**: 8 classes (64 testes, incluindo integração e E2E)
 - **Main Class**: 1 classe (~20 LOC)
 
 ### Linhas de Código Total: ~3,900 LOC (backend Java, incluindo testes)
@@ -211,14 +211,15 @@ com.helpdeskai/
 **Backend Controllers**: 100% ✅ (REST API)
 **Backend Exception Handling**: 100% ✅ (global handler)
 
-**Backend API**: 🎉 **100% COMPLETO (unit + integração base)** 🎉
+**Backend API**: 🎉 **100% COMPLETO (unit + integração base + E2E inicial)** 🎉
 
 ### Testes
 - ✅ Unitários de serviços e segurança: 62 testes passando (Auth, Chunking, Embedding, Document, Chat, JwtTokenProvider)
 - ✅ Integração: 1 teste (DocumentChatIntegrationTest) com Testcontainers + pgvector validando pipeline RAG (chat + persistência de mensagens)
+- ✅ E2E inicial: DocumentUploadChatE2ETest cobre upload -> chunking -> embeddings mockados -> persistência -> chat RAG via Testcontainers
 - ✅ Cobertura JaCoCo configurada (mín. 70%)
 - ✅ Toolchain Maven fixada para JDK 21 (Temurin)
-- ⏳ E2E: pipeline completo (upload PDF + chat) pendente
+- ⏳ Expandir E2E (mais cenários, upload PDF real, variação de thresholds)
 
 ### Pendente:
 **Frontend**: 0% ⏳ (Angular não iniciado)
@@ -376,12 +377,13 @@ curl -X POST http://localhost:8080/api/auth/login \
 - [x] Testes unitários ChatService
 - [x] Testes unitários JwtTokenProvider
 - [x] Teste de integração RAG com Testcontainers + pgvector (DocumentChatIntegrationTest)
+- [x] Teste E2E inicial (upload -> processamento -> chat) com Testcontainers (DocumentUploadChatE2ETest)
 - [x] Toolchain Maven para JDK 21
 
-**Total testes: 63 passando (0 falhas)**
+**Total testes: 64 passando (0 falhas)**
 
 #### 🚧 Pendente:
-1. Testes E2E para pipeline RAG (upload + chat)
+1. Ampliar E2E com PDF real e múltiplos documentos/conversas
 
 ### Opção 2: Frontend Angular
 1. Setup projeto Angular 17+
@@ -414,12 +416,13 @@ curl -X POST http://localhost:8080/api/auth/login \
 3. **feat: implement security layer with JWT authentication** - Security + Config (~560 LOC)
 4. **feat: implement REST controllers and global exception handler** - Controllers + Handler (~650 LOC)
 5. **test: add document chat integration test with pgvector** - Testcontainers + pgvector (RAG)
+6. **test: add e2e upload + chat flow with Testcontainers** - Upload, chunking, embeddings mockados, chat RAG
 
-**Total: 6 commits, ~5200 LOC**
+**Total: 7 commits, ~5300 LOC**
 
 ---
 
 **Última atualização**: 2025-12-05
-**Backend Status**: 100% unit + integração base concluídos (E2E pendente)
-**Tempo total de desenvolvimento**: ~4-5 horas de implementação assistida
-**Próxima meta**: Testes E2E ou iniciar Frontend Angular
+**Backend Status**: 100% unit + integração base + E2E inicial concluídos
+**Tempo total de desenvolvimento**: ~5-6 horas de implementação assistida
+**Próxima meta**: Expandir E2E ou iniciar Frontend Angular
