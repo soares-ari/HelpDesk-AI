@@ -8,6 +8,7 @@ import com.helpdeskai.entity.User;
 import com.helpdeskai.repository.DocumentRepository;
 import com.helpdeskai.repository.ChunkRepository;
 import com.helpdeskai.repository.UserRepository;
+import com.helpdeskai.repository.MessageRepository;
 import com.helpdeskai.service.ChatService;
 import com.helpdeskai.service.DocumentService;
 import com.helpdeskai.service.EmbeddingService;
@@ -79,6 +80,9 @@ class DocumentUploadChatE2ETest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     @MockBean
     private ChunkRepository chunkRepository;
@@ -259,6 +263,58 @@ class DocumentUploadChatE2ETest {
                 user);
         assertThat(chat2.getCitations()).isNotEmpty();
         assertThat(chat2.getCitations().get(0).getMetadata().getDocumentId()).isEqualTo(docId2);
+    }
+
+    @Test
+    void shouldReuseConversationWhenConversationIdProvided() throws Exception {
+        User user = userRepository.save(User.builder()
+                .email("reuse@test.com")
+                .passwordHash("secret")
+                .name("Reuse User")
+                .build());
+
+        when(embeddingService.generateEmbedding(any())).thenReturn(fixedVector());
+        AtomicReference<com.helpdeskai.entity.Chunk> currentChunk = new AtomicReference<>();
+        com.helpdeskai.entity.Document doc = com.helpdeskai.entity.Document.builder()
+                .id(555L)
+                .filename("reuse.pdf")
+                .build();
+        com.helpdeskai.entity.Chunk chunk = com.helpdeskai.entity.Chunk.builder()
+                .id(200L)
+                .document(doc)
+                .content("conteudo reuse")
+                .metadata(com.helpdeskai.entity.Chunk.ChunkMetadata.builder().page(1).section("Reuse").build())
+                .chunkIndex(0)
+                .build();
+        currentChunk.set(chunk);
+        when(chunkRepository.findSimilarChunks(any(PGvector.class), anyInt(), anyDouble()))
+                .thenAnswer(invocation -> List.<Object[]>of(
+                        new Object[]{currentChunk.get(), java.math.BigDecimal.valueOf(0.9)}));
+
+        AssistantMessage assistantMessage = new AssistantMessage("Mensagem 1");
+        Generation generation = new Generation(assistantMessage);
+        org.springframework.ai.chat.model.ChatResponse aiResponse =
+                new org.springframework.ai.chat.model.ChatResponse(List.of(generation));
+        ChatClient.ChatClientRequestSpec requestSpec = Mockito.mock(ChatClient.ChatClientRequestSpec.class, Mockito.RETURNS_DEEP_STUBS);
+        when(chatClientBuilder.build()).thenReturn(chatClient);
+        ReflectionTestUtils.setField(chatService, "chatClient", chatClient);
+        when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
+        when(requestSpec.call().chatResponse()).thenReturn(aiResponse);
+
+        ChatResponse first = chatService.chat(ChatRequest.builder()
+                        .message("Primeira mensagem")
+                        .build(),
+                user);
+
+        ChatResponse second = chatService.chat(ChatRequest.builder()
+                        .message("Segunda mensagem")
+                        .conversationId(first.getConversationId())
+                        .build(),
+                user);
+
+        assertThat(second.getConversationId()).isEqualTo(first.getConversationId());
+        assertThat(second.getCitations()).isNotEmpty();
+        assertThat(messageRepository.countByConversationId(first.getConversationId())).isEqualTo(4);
     }
 
     private Document waitForDocumentCompletion(Long documentId) throws InterruptedException {
