@@ -180,20 +180,21 @@ Chat com RAG:
 
 ### Backend
 
-O projeto possui uma suíte abrangente de testes unitários para os serviços principais.
+O projeto possui suíte abrangente de testes unitários e um teste de integração RAG com Testcontainers (pgvector). Docker deve estar em execução para o teste de integração.
 
-**Status Atual**: 62 testes passando (0 falhas)
+**Status Atual**: 63 testes passando (0 falhas)
 - AuthService: 13 ✅
 - ChunkingService: 15 ✅
 - EmbeddingService: 19 ✅
 - DocumentService: unit ✅
 - ChatService: unit ✅
 - JwtTokenProvider: unit ✅
+- Integração RAG: DocumentChatIntegrationTest ✅ (Testcontainers + pgvector)
 
 #### Executar Todos os Testes
 ```bash
 cd backend
-mvn test
+mvn -t ../.mvn/toolchains.xml test
 ```
 
 #### Executar Testes de um Service Específico
@@ -220,8 +221,8 @@ O relatório será gerado em: `target/site/jacoco/index.html`
 #### Executar Testes com Docker
 ```bash
 docker run --rm -v "$(pwd)":/app \
-  maven:3.9-eclipse-temurin-17 \
-  bash -c "cd /app && mvn test"
+  maven:3.9-eclipse-temurin-21 \
+  bash -c "cd /app && mvn -t .mvn/toolchains.xml test"
 ```
 
 ### Frontend
