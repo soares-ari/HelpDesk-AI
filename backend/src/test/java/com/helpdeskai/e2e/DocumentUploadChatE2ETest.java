@@ -36,6 +36,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -129,11 +130,13 @@ class DocumentUploadChatE2ETest {
         when(embeddingService.generateEmbedding(any())).thenReturn(fixedVector());
 
         AtomicLong savedChunkId = new AtomicLong(1L);
+        AtomicReference<com.helpdeskai.entity.Chunk> currentChunk = new AtomicReference<>();
         when(chunkRepository.save(any(com.helpdeskai.entity.Chunk.class))).thenAnswer(invocation -> {
             com.helpdeskai.entity.Chunk chunk = invocation.getArgument(0);
             if (chunk.getId() == null) {
                 chunk.setId(savedChunkId.getAndIncrement());
             }
+            currentChunk.set(chunk);
             return chunk;
         });
 
@@ -165,16 +168,9 @@ class DocumentUploadChatE2ETest {
         assertThat(processed.getTotalChunks()).isGreaterThan(0);
 
         // Executa chat usando os chunks persistidos
-        com.helpdeskai.entity.Document docForChunk = documentRepository.findById(documentId).orElseThrow();
-        com.helpdeskai.entity.Chunk chunk = com.helpdeskai.entity.Chunk.builder()
-                .id(savedChunkId.get())
-                .document(docForChunk)
-                .content("trecho do documento e2e")
-                .metadata(com.helpdeskai.entity.Chunk.ChunkMetadata.builder().page(1).section("E2E").build())
-                .chunkIndex(0)
-                .build();
         when(chunkRepository.findSimilarChunks(any(PGvector.class), anyInt(), anyDouble()))
-                .thenReturn(List.<Object[]>of(new Object[]{chunk, java.math.BigDecimal.valueOf(0.99)}));
+                .thenAnswer(invocation -> List.<Object[]>of(
+                        new Object[]{currentChunk.get(), java.math.BigDecimal.valueOf(0.99)}));
 
         ChatRequest request = ChatRequest.builder()
                 .message("Qual o conteúdo do documento?")
@@ -185,6 +181,84 @@ class DocumentUploadChatE2ETest {
         assertThat(chatResponse.getMessage()).isEqualTo("Resposta E2E simulada");
         assertThat(chatResponse.getCitations()).isNotEmpty();
         assertThat(chatResponse.getCitations().get(0).getMetadata().getDocumentId()).isEqualTo(documentId);
+    }
+
+    @Test
+    void shouldHandleMultipleUploadsAndConversations() throws Exception {
+        User user = userRepository.save(User.builder()
+                .email("multi@test.com")
+                .passwordHash("secret")
+                .name("Multi User")
+                .build());
+
+        when(embeddingService.generateEmbeddings(anyList())).thenAnswer(invocation -> {
+            List<String> texts = invocation.getArgument(0);
+            return texts.stream().map(t -> fixedVector()).toList();
+        });
+        when(embeddingService.generateEmbedding(any())).thenReturn(fixedVector());
+
+        AtomicLong savedChunkId = new AtomicLong(100L);
+        AtomicReference<com.helpdeskai.entity.Chunk> currentChunk = new AtomicReference<>();
+        when(chunkRepository.save(any(com.helpdeskai.entity.Chunk.class))).thenAnswer(invocation -> {
+            com.helpdeskai.entity.Chunk chunk = invocation.getArgument(0);
+            if (chunk.getId() == null) {
+                chunk.setId(savedChunkId.getAndIncrement());
+            }
+            currentChunk.set(chunk);
+            return chunk;
+        });
+
+        when(chunkRepository.findSimilarChunks(any(PGvector.class), anyInt(), anyDouble()))
+                .thenAnswer(invocation -> List.<Object[]>of(
+                        new Object[]{currentChunk.get(), java.math.BigDecimal.valueOf(0.97)}));
+
+        AssistantMessage assistantMessage = new AssistantMessage("Resposta E2E simulada");
+        Generation generation = new Generation(assistantMessage);
+        org.springframework.ai.chat.model.ChatResponse aiResponse =
+                new org.springframework.ai.chat.model.ChatResponse(List.of(generation));
+        ChatClient.ChatClientRequestSpec requestSpec = Mockito.mock(ChatClient.ChatClientRequestSpec.class, Mockito.RETURNS_DEEP_STUBS);
+        when(chatClientBuilder.build()).thenReturn(chatClient);
+        ReflectionTestUtils.setField(chatService, "chatClient", chatClient);
+        when(chatClient.prompt(any(Prompt.class))).thenReturn(requestSpec);
+        when(requestSpec.call().chatResponse()).thenReturn(aiResponse);
+
+        // Upload 1
+        MockMultipartFile file1 = new MockMultipartFile(
+                "file",
+                "primeiro.pdf",
+                "application/pdf",
+                samplePdfBytes()
+        );
+        DocumentUploadResponse upload1 = documentService.uploadDocument(file1, user);
+        Long docId1 = upload1.getDocumentId();
+        Document processed1 = waitForDocumentCompletion(docId1);
+        assertThat(processed1.getStatus()).isEqualTo(Document.DocumentStatus.COMPLETED);
+
+        ChatResponse chat1 = chatService.chat(ChatRequest.builder()
+                        .message("Pergunta sobre primeiro documento")
+                        .build(),
+                user);
+        assertThat(chat1.getCitations()).isNotEmpty();
+        assertThat(chat1.getCitations().get(0).getMetadata().getDocumentId()).isEqualTo(docId1);
+
+        // Upload 2
+        MockMultipartFile file2 = new MockMultipartFile(
+                "file",
+                "segundo.pdf",
+                "application/pdf",
+                samplePdfBytes()
+        );
+        DocumentUploadResponse upload2 = documentService.uploadDocument(file2, user);
+        Long docId2 = upload2.getDocumentId();
+        Document processed2 = waitForDocumentCompletion(docId2);
+        assertThat(processed2.getStatus()).isEqualTo(Document.DocumentStatus.COMPLETED);
+
+        ChatResponse chat2 = chatService.chat(ChatRequest.builder()
+                        .message("Pergunta sobre segundo documento")
+                        .build(),
+                user);
+        assertThat(chat2.getCitations()).isNotEmpty();
+        assertThat(chat2.getCitations().get(0).getMetadata().getDocumentId()).isEqualTo(docId2);
     }
 
     private Document waitForDocumentCompletion(Long documentId) throws InterruptedException {
