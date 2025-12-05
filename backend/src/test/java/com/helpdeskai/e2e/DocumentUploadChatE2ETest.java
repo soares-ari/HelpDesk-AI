@@ -36,6 +36,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,8 +65,6 @@ class DocumentUploadChatE2ETest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        // Permite usar texto simples para evitar um PDF real no teste
-        registry.add("helpdesk.upload.allowed-mime-types", () -> "application/pdf,text/plain");
     }
 
     @Autowired
@@ -96,6 +95,22 @@ class DocumentUploadChatE2ETest {
         float[] values = new float[1536];
         values[0] = 1.0f;
         return new PGvector(values);
+    }
+
+    private byte[] samplePdfBytes() {
+        String pdf = """
+                %PDF-1.4
+                1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
+                2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
+                3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Contents 4 0 R /Resources << >> >> endobj
+                4 0 obj << /Length 55 >> stream
+                BT /F1 12 Tf 72 712 Td (Conteudo de teste E2E PDF) Tj ET
+                endstream
+                endobj
+                trailer << /Root 1 0 R >>
+                %%EOF
+                """;
+        return pdf.lines().map(String::trim).collect(Collectors.joining("\n")).getBytes(StandardCharsets.UTF_8);
     }
 
     @Test
@@ -134,12 +149,11 @@ class DocumentUploadChatE2ETest {
         when(requestSpec.call().chatResponse()).thenReturn(aiResponse);
 
         // Upload com texto simples (permitido via propriedade)
-        String longText = "Conteudo de teste para E2E ".repeat(20);
         MockMultipartFile file = new MockMultipartFile(
                 "file",
-                "documento.txt",
-                "text/plain",
-                longText.getBytes(StandardCharsets.UTF_8)
+                "documento.pdf",
+                "application/pdf",
+                samplePdfBytes()
         );
 
         DocumentUploadResponse uploadResponse = documentService.uploadDocument(file, user);
