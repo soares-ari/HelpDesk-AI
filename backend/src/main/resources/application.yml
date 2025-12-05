@@ -59,7 +59,7 @@ spring:
     vectorstore:
       pgvector:
         index-type: HNSW
-        distance-type: COSINE_SIMILARITY
+        distance-type: COSINE_DISTANCE
         dimensions: 1536
         remove-existing-vector-store-table: false
 

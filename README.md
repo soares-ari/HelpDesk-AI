@@ -25,7 +25,7 @@ Helpdesk AI permite que usuários façam upload de documentos PDF (APIs, manuais
 ## 🛠️ Stack Tecnológica
 
 ### Backend
-- **Java 17+**
+- **Java 21** (toolchain Maven já configurada para Temurin 21)
 - **Spring Boot 3.3.0** - Framework principal
 - **Spring AI 1.0.0-M4** - Integração com LLMs
 - **PostgreSQL 16 + pgvector 0.8.1** - Banco de dados vetorial
@@ -53,7 +53,7 @@ Helpdesk AI permite que usuários façam upload de documentos PDF (APIs, manuais
 
 ### Pré-requisitos
 
-- Java 17+ ([Download OpenJDK](https://adoptium.net/))
+- Java 21 (Temurin recomendado)
 - Maven 3.9+ ([Download Maven](https://maven.apache.org/download.cgi))
 - Node.js 18+ ([Download Node](https://nodejs.org/))
 - Docker Desktop ([Download Docker](https://www.docker.com/products/docker-desktop))
@@ -81,6 +81,8 @@ docker exec helpdesk-ai-db psql -U postgres -d helpdesk_ai -c "\dx"
 **Nota:** O banco está rodando na porta `5433` (não 5432) para evitar conflitos.
 
 ### 3. Configurar Backend
+
+> Nota: o Maven usa o toolchain em `.mvn/toolchains.xml` apontando para `C:\Program Files\Eclipse Adoptium\jdk-21.0.9.10-hotspot`. Ajuste o caminho se instalou o JDK 21 em outro diretório.
 
 Criar arquivo `backend/src/main/resources/application-dev.yml`:
 
@@ -177,9 +179,49 @@ Chat com RAG:
 ## 🧪 Testes
 
 ### Backend
+
+O projeto possui uma suíte abrangente de testes unitários para os serviços principais.
+
+**Status Atual**: 62 testes passando (0 falhas)
+- AuthService: 13 ✅
+- ChunkingService: 15 ✅
+- EmbeddingService: 19 ✅
+- DocumentService: unit ✅
+- ChatService: unit ✅
+- JwtTokenProvider: unit ✅
+
+#### Executar Todos os Testes
 ```bash
 cd backend
 mvn test
+```
+
+#### Executar Testes de um Service Específico
+```bash
+# AuthService tests
+mvn test -Dtest=AuthServiceTest
+
+# ChunkingService tests
+mvn test -Dtest=ChunkingServiceTest
+
+# EmbeddingService tests
+mvn test -Dtest=EmbeddingServiceTest
+```
+
+#### Gerar Relatório de Coverage (JaCoCo)
+```bash
+mvn clean test jacoco:report
+```
+
+O relatório será gerado em: `target/site/jacoco/index.html`
+
+**Configuração de Coverage**: Mínimo 70% de cobertura (configurado no pom.xml)
+
+#### Executar Testes com Docker
+```bash
+docker run --rm -v "$(pwd)":/app \
+  maven:3.9-eclipse-temurin-17 \
+  bash -c "cd /app && mvn test"
 ```
 
 ### Frontend
@@ -284,9 +326,9 @@ docker exec helpdesk-ai-db psql -U postgres -c "SELECT version();"
 ### MVP (Concluído)
 - ✅ Setup infraestrutura (PostgreSQL + pgvector)
 - ✅ Estrutura de projeto
-- ⏳ Backend core (ingestão + chat)
+- ✅ Backend core (ingestão + chat + segurança)
 - ⏳ Frontend core (upload + chat UI)
-- ⏳ Autenticação JWT
+- ✅ Autenticação JWT
 - ⏳ Deploy Railway + Vercel
 
 ### Futuras Melhorias

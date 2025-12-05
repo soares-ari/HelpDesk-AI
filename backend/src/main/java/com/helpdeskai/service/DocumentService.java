@@ -46,8 +46,12 @@ public class DocumentService {
     @Value("${helpdesk.upload.max-file-size-mb:50}")
     private int maxFileSizeMb;
 
-    @Value("${helpdesk.upload.allowed-mime-types}")
-    private List<String> allowedMimeTypes;
+    @Value("${helpdesk.upload.allowed-mime-types:application/pdf}")
+    private String allowedMimeTypesStr;
+
+    private List<String> getAllowedMimeTypes() {
+        return List.of(allowedMimeTypesStr.split(","));
+    }
 
     public DocumentService(DocumentRepository documentRepository,
                           ChunkRepository chunkRepository,
@@ -288,7 +292,7 @@ public class DocumentService {
 
         // Validar MIME type
         String contentType = file.getContentType();
-        if (contentType == null || !allowedMimeTypes.contains(contentType)) {
+        if (contentType == null || !getAllowedMimeTypes().contains(contentType)) {
             throw new DocumentProcessingException(
                     "Tipo de arquivo não permitido. Apenas PDF é aceito.");
         }

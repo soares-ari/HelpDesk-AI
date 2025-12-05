@@ -182,7 +182,7 @@ com.helpdeskai/
 
 ## 📊 Estatísticas Finais
 
-### Arquivos Criados: 40 arquivos Java
+### Arquivos Criados: 46 arquivos Java
 - **Entidades**: 5 classes (~400 LOC)
 - **Repositories**: 5 interfaces (~300 LOC)
 - **DTOs**: 7 classes (~200 LOC)
@@ -192,14 +192,15 @@ com.helpdeskai/
 - **Config**: 2 classes (~190 LOC)
 - **Controllers**: 3 classes (~420 LOC)
 - **Exception Handler**: 1 classe (~230 LOC)
+- **Testes unitários**: 6 classes (62 testes)
 - **Main Class**: 1 classe (~20 LOC)
 
-### Linhas de Código Total: ~3,600 LOC (backend Java)
+### Linhas de Código Total: ~3,900 LOC (backend Java, incluindo testes)
 - Configurações: ~250 LOC (pom.xml, application.yml)
 - SQL: ~100 LOC (init-db.sql)
 - Documentação: ~750 LOC (README, PROGRESS, etc)
 
-**Total Geral: ~4,700 LOC**
+**Total Geral: ~5,000 LOC**
 
 ## 🎯 Status Geral
 
@@ -210,10 +211,15 @@ com.helpdeskai/
 **Backend Controllers**: 100% ✅ (REST API)
 **Backend Exception Handling**: 100% ✅ (global handler)
 
-**Backend API**: 🎉 **95% COMPLETO** 🎉
+**Backend API**: 🎉 **100% COMPLETO (unit)** 🎉
+
+### Testes
+- ✅ Unitários de serviços e segurança: 62 testes passando (Auth, Chunking, Embedding, Document, Chat, JwtTokenProvider)
+- ✅ Cobertura JaCoCo configurada (mín. 70%)
+- ✅ Toolchain Maven fixada para JDK 21 (Temurin)
+- ⏳ Integração/E2E: não iniciado
 
 ### Pendente:
-**Testes**: 0% ⏳ (testes unitários + integração)
 **Frontend**: 0% ⏳ (Angular não iniciado)
 **Deploy**: 0% ⏳ (Railway + Vercel)
 
@@ -357,13 +363,24 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 ## 📝 Próximos Passos
 
-### Opção 1: Testes Automatizados
-1. Testes unitários para Services (com Mockito)
-2. Testes de integração (com Testcontainers)
-3. Testes E2E para pipeline RAG
-4. Coverage report (JaCoCo)
+### Opção 1: Testes Automatizados (Unitários 100% CONCLUÍDO)
 
-**Estimativa**: 2-3 dias de trabalho
+#### ✅ Concluído:
+- [x] Configuração de dependências de teste (Mockito, AssertJ, MockWebServer)
+- [x] Configuração JaCoCo (70% minimum coverage)
+- [x] Testes unitários AuthService (13)
+- [x] Testes unitários ChunkingService (15)
+- [x] Testes unitários EmbeddingService (19)
+- [x] Testes unitários DocumentService
+- [x] Testes unitários ChatService
+- [x] Testes unitários JwtTokenProvider
+- [x] Toolchain Maven para JDK 21
+
+**Total unitários: 62 testes passando (0 falhas)**
+
+#### 🚧 Pendente:
+1. Testes de integração (Testcontainers PostgreSQL/pgvector)
+2. Testes E2E para pipeline RAG (upload + chat)
 
 ### Opção 2: Frontend Angular
 1. Setup projeto Angular 17+
@@ -396,11 +413,11 @@ curl -X POST http://localhost:8080/api/auth/login \
 3. **feat: implement security layer with JWT authentication** - Security + Config (~560 LOC)
 4. **feat: implement REST controllers and global exception handler** - Controllers + Handler (~650 LOC)
 
-**Total: 4 commits, ~4700 LOC**
+**Total: 5 commits, ~4700 LOC**
 
 ---
 
-**Última atualização**: 2025-12-04
-**Backend Status**: 95% completo (apenas testes faltando)
-**Tempo total de desenvolvimento**: ~3-4 horas de implementação assistida
-**Próxima meta**: Testes ou Frontend Angular
+**Última atualização**: 2025-12-05
+**Backend Status**: 100% unit tests concluídos (integração/E2E pendente)
+**Tempo total de desenvolvimento**: ~4-5 horas de implementação assistida
+**Próxima meta**: Testes de integração/E2E ou iniciar Frontend Angular
