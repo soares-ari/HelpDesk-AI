@@ -32,4 +32,4 @@ if ([string]::IsNullOrEmpty($apiKey)) {
 
 Write-Host ""
 Write-Host "Starting Spring Boot..." -ForegroundColor Cyan
-& mvn -t ../.mvn/toolchains.xml spring-boot:run "-Dmaven.test.skip=true"
+& mvn -t .mvn/toolchains.xml spring-boot:run "-Dmaven.test.skip=true"

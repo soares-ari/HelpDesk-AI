@@ -142,6 +142,9 @@ credentials/
 *.swo
 *~
 
+# Windows-specific files
+nul
+
 # Backup files
 *.bak
 *.backup
