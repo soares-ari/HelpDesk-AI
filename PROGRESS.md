@@ -222,7 +222,6 @@ com.helpdeskai/
 - ⏳ Expandir E2E (mais cenários, upload PDF real, variação de thresholds)
 
 ### Pendente:
-**Frontend**: 0% ⏳ (Angular não iniciado)
 **Deploy**: 0% ⏳ (Railway + Vercel)
 
 ## 🚀 Endpoints REST API Disponíveis
@@ -380,7 +379,17 @@ curl -X POST http://localhost:8080/api/auth/login \
 - [x] Teste E2E inicial (upload -> processamento -> chat) com Testcontainers (DocumentUploadChatE2ETest)
 - [x] Toolchain Maven para JDK 21
 
-**Total testes: 64 passando (0 falhas)**
+**Total testes: 66 passando (0 falhas, 0 erros)
+
+**Cobertura de Código (JaCoCo)**:
+- Total: 64% (785 linhas)
+- Services: 91% ⭐ (419 linhas cobertas de 453)
+- Config: 80%
+- Entity: 70%
+- Security: 42% (JwtTokenProvider 100%)
+- Controllers: 8% (testados via E2E)
+
+Relatório completo: `backend/target/site/jacoco/index.html`
 
 #### 🚧 Pendente:
 1. Ampliar E2E com PDF real e múltiplos documentos/conversas
@@ -422,7 +431,9 @@ curl -X POST http://localhost:8080/api/auth/login \
 
 ---
 
-**Última atualização**: 2025-12-05
-**Backend Status**: 100% unit + integração base + E2E inicial concluídos
-**Tempo total de desenvolvimento**: ~5-6 horas de implementação assistida
-**Próxima meta**: Expandir E2E ou iniciar Frontend Angular
+**Última atualização**: 2025-12-09
+**Backend Status**: 100% funcional + fixes de produção aplicados
+**Frontend Status**: 100% funcional (Angular 21 com standalone components)
+**RAG Pipeline**: ✅ Funcionando end-to-end (upload → chunking → embeddings → vector search → GPT-4 → citations)
+**Tempo total de desenvolvimento**: ~10-12 horas de implementação assistida
+**Próxima meta**: Deploy (Railway + Vercel) ou expandir testes

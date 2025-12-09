@@ -34,10 +34,11 @@ Helpdesk AI permite que usuários façam upload de documentos PDF (APIs, manuais
 - **Maven** - Gestão de dependências
 
 ### Frontend
-- **Angular 17+**
-- **TypeScript**
-- **PrimeNG** - Componentes UI enterprise
-- **RxJS** - Programação reativa
+- **Angular 21** - Latest standalone components architecture
+- **TypeScript 5.9**
+- **RxJS 7.8** - Reactive programming
+- **Vitest 4.0** - Unit testing
+- **Angular Signals** - Modern state management
 
 ### AI/LLM
 - **OpenAI API**
@@ -84,27 +85,29 @@ docker exec helpdesk-ai-db psql -U postgres -d helpdesk_ai -c "\dx"
 
 > Nota: o Maven usa o toolchain em `.mvn/toolchains.xml` apontando para `C:\Program Files\Eclipse Adoptium\jdk-21.0.9.10-hotspot`. Ajuste o caminho se instalou o JDK 21 em outro diretório.
 
-Criar arquivo `backend/src/main/resources/application-dev.yml`:
+Criar arquivo `backend/.env`:
 
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5433/helpdesk_ai
-    username: postgres
-    password: postgres
-
-  ai:
-    openai:
-      api-key: sk-your-openai-api-key-here
-
-jwt:
-  secret: your-256-bit-secret-key-change-in-production
+```bash
+DB_HOST=localhost
+DB_PORT=5433
+DB_NAME=helpdesk_ai
+DB_USER=postgres
+DB_PASSWORD=postgres
+OPENAI_API_KEY=sk-your-openai-api-key-here
+JWT_SECRET=your-256-bit-secret-key-change-in-production-please
+PORT=8080
+SPRING_PROFILES_ACTIVE=dev
 ```
 
-Compilar e executar:
+**Windows**: Executar com script que carrega variáveis:
 ```bash
 cd backend
-mvn clean install
+.\run.ps1
+```
+
+**Linux/Mac**: Executar diretamente:
+```bash
+cd backend
 mvn spring-boot:run
 ```
 
@@ -170,11 +173,13 @@ Chat com RAG:
 
 ### Frontend
 
-- Upload de documentos (drag & drop)
-- Interface de chat corporativa
-- Exibição de fontes citadas
-- Histórico de conversas
-- Dashboard de métricas
+- Autenticação (Login/Registro)
+- Upload de documentos com drag & drop
+- Interface de chat em tempo real
+- Exibição de citações e fontes
+- Gerenciamento de histórico de conversas
+- Lista e exclusão de documentos
+- UI responsiva e moderna
 
 ## 🧪 Testes
 
@@ -182,15 +187,23 @@ Chat com RAG:
 
 O projeto possui suíte abrangente de testes unitários, teste de integração RAG e teste E2E inicial com Testcontainers (pgvector). Docker deve estar em execução para integração/E2E.
 
-**Status Atual**: 64 testes passando (0 falhas)
-- AuthService: 13 ✅
-- ChunkingService: 15 ✅
-- EmbeddingService: 19 ✅
-- DocumentService: unit ✅
-- ChatService: unit ✅
-- JwtTokenProvider: unit ✅
-- Integração RAG: DocumentChatIntegrationTest ✅ (Testcontainers + pgvector)
-- E2E inicial: DocumentUploadChatE2ETest ✅ (upload -> processamento -> chat usando Testcontainers)
+**Status Atual**: 66 testes passando (0 falhas, 0 erros)
+- AuthService: 13 testes ✅
+- ChunkingService: 15 testes ✅
+- EmbeddingService: 19 testes ✅
+- DocumentService: 8 testes ✅
+- ChatService: 3 testes ✅
+- JwtTokenProvider: 4 testes ✅
+- Integração RAG: 1 teste ✅ (DocumentChatIntegrationTest com Testcontainers + pgvector)
+- E2E: 3 testes ✅ (DocumentUploadChatE2ETest - fluxo completo com Testcontainers)
+
+**Cobertura de Código** (JaCoCo):
+- **Total**: 64% (785 linhas cobertas)
+- **Services**: 91% ⭐ (componentes críticos de negócio)
+- **Config**: 80%
+- **Entity**: 70%
+- **Security**: 42% (JwtTokenProvider 100%, filtros não testados unitariamente)
+- Controllers: 8% (testados via integração)
 
 #### Executar Todos os Testes
 ```bash
@@ -315,6 +328,27 @@ docker exec helpdesk-ai-db psql -U postgres -c "SELECT version();"
 # Deve mostrar: PostgreSQL 16.x com pgvector
 ```
 
+### Backend - PGobject cannot be cast to PGvector
+Esse erro foi resolvido usando query projection em vez de carregar entidades completas:
+- ChunkRepository usa `SELECT` específico excluindo campo `embedding`
+- ChatService constrói objetos Chunk manualmente com Document.filename incluído
+
+### Backend - Document deletion not working
+Certifique-se de que `@Modifying` está presente em `deleteByDocumentId()`:
+```java
+@Modifying
+@Query("DELETE FROM Chunk c WHERE c.document.id = :documentId")
+void deleteByDocumentId(@Param("documentId") Long documentId);
+```
+
+### Chat - No relevant chunks found
+Verifique o threshold de similaridade em `application.yml`:
+```yaml
+helpdesk:
+  retrieval:
+    similarity-threshold: 0.3  # Reduzido de 0.7 para melhor recall
+```
+
 ## 📚 Recursos e Referências
 
 - [Spring AI Documentation](https://docs.spring.io/spring-ai/reference/)
@@ -329,8 +363,9 @@ docker exec helpdesk-ai-db psql -U postgres -c "SELECT version();"
 - ✅ Setup infraestrutura (PostgreSQL + pgvector)
 - ✅ Estrutura de projeto
 - ✅ Backend core (ingestão + chat + segurança)
-- ⏳ Frontend core (upload + chat UI)
+- ✅ Frontend Angular 21 (upload + chat UI + auth)
 - ✅ Autenticação JWT
+- ✅ RAG pipeline end-to-end funcionando
 - ⏳ Deploy Railway + Vercel
 
 ### Futuras Melhorias
