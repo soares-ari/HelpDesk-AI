@@ -38,7 +38,16 @@ import { User } from '../../../shared/models/user.model';
         <div class="bg-white rounded-lg shadow p-6 mb-8">
           <h2 class="text-2xl font-bold text-gray-900 mb-4">Upload de Documentos</h2>
 
-          <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+          <div
+            class="border-2 border-dashed rounded-lg p-8 text-center transition-colors"
+            [class.border-blue-500]="isDragging()"
+            [class.bg-blue-50]="isDragging()"
+            [class.border-gray-300]="!isDragging()"
+            [class.hover:border-blue-500]="!isDragging()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+          >
             <input
               type="file"
               #fileInput
@@ -151,6 +160,7 @@ export class DashboardComponent implements OnInit {
   uploadError = signal('');
   uploadSuccess = signal('');
   currentUser = signal<User | null>(null);
+  isDragging = signal(false);
 
   constructor(
     private documentService: DocumentService,
@@ -175,10 +185,37 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+
+    const files = event.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    this.processFile(file);
+  }
+
   onFileSelected(event: any) {
     const file: File = event.target.files[0];
     if (!file) return;
+    this.processFile(file);
+  }
 
+  private processFile(file: File) {
     if (file.type !== 'application/pdf') {
       this.uploadError.set('Apenas arquivos PDF são permitidos');
       return;
