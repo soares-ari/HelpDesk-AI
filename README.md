@@ -421,8 +421,8 @@ helpdesk:
 **Ari Soares**
 Desenvolvedor Full-Stack | Java | Angular | React | Python
 
-- GitHub: [seu-github](https://github.com/soares-ari)
-- LinkedIn: [seu-linkedin](https://linkedin.com/in/ari-soares)
+- [Github](https://github.com/soares-ari)
+- [LinkedIn](https://linkedin.com/in/ari-soares)
 
 ## 📄 Licença
 
