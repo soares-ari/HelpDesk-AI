@@ -418,12 +418,11 @@ helpdesk:
 
 ## 👥 Autor
 
-**Seu Nome**
-Desenvolvedor Full-Stack | Java | Angular | Machine Learning
+**Ari Soares**
+Desenvolvedor Full-Stack | Java | Angular | React | Python
 
-- GitHub: [seu-github](https://github.com/seu-usuario)
-- LinkedIn: [seu-linkedin](https://linkedin.com/in/seu-perfil)
-- Portfolio: [seu-site](https://seu-portfolio.com)
+- GitHub: [seu-github](https://github.com/soares-ari)
+- LinkedIn: [seu-linkedin](https://linkedin.com/in/ari-soares)
 
 ## 📄 Licença
 
