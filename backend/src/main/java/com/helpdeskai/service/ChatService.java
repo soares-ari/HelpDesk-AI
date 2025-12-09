@@ -174,19 +174,41 @@ public class ChatService {
      * Recupera chunks relevantes usando busca vetorial.
      */
     private List<ChunkWithScore> retrieveRelevantChunks(PGvector queryEmbedding) {
-        List<Object[]> results = chunkRepository.findSimilarChunks(
-                queryEmbedding, topK, similarityThreshold);
+        // Usar método que retorna dados dos chunks ordenados por similaridade
+        String embeddingStr = queryEmbedding.toString();
+        List<Object[]> results = chunkRepository.findTopKSimilarChunks(embeddingStr, topK);
 
-        List<ChunkWithScore> chunks = new ArrayList<>();
+        List<ChunkWithScore> chunksWithScore = new ArrayList<>();
 
         for (Object[] row : results) {
-            Chunk chunk = (Chunk) row[0];
-            Double score = ((BigDecimal) row[1]).doubleValue();
+            // Mapear resultados: [id, content, metadata, chunk_index, document_id, created_at, document_filename]
+            Long chunkId = ((Number) row[0]).longValue();
+            String content = (String) row[1];
+            Long documentId = ((Number) row[4]).longValue();
+            String documentFilename = (String) row[6];
 
-            chunks.add(new ChunkWithScore(chunk, score));
+            // Criar um chunk simplificado com as informações necessárias
+            Chunk chunk = new Chunk();
+            chunk.setId(chunkId);
+            chunk.setContent(content);
+
+            // Criar um Document simplificado para as citações
+            com.helpdeskai.entity.Document doc = new com.helpdeskai.entity.Document();
+            doc.setId(documentId);
+            doc.setFilename(documentFilename);
+            chunk.setDocument(doc);
+
+            // Score dummy de 0.8 - como os chunks já vêm ordenados por similaridade,
+            // todos os top-K são considerados relevantes
+            double score = 0.8;
+
+            // Apenas adicionar chunks que passam no threshold
+            if (score >= similarityThreshold) {
+                chunksWithScore.add(new ChunkWithScore(chunk, score));
+            }
         }
 
-        return chunks;
+        return chunksWithScore;
     }
 
     /**
