@@ -3,6 +3,7 @@ package com.helpdeskai.repository;
 import com.helpdeskai.entity.Chunk;
 import com.pgvector.PGvector;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -36,26 +37,28 @@ public interface ChunkRepository extends JpaRepository<Chunk, Long> {
         LIMIT :topK
         """, nativeQuery = true)
     List<Object[]> findSimilarChunks(
-        @Param("queryEmbedding") PGvector queryEmbedding,
+        @Param("queryEmbedding") String queryEmbedding,
         @Param("topK") int topK,
         @Param("threshold") double threshold
     );
 
     /**
      * Busca simplificada de chunks similares (usando parâmetros padrão)
+     * Retorna apenas ID, conteúdo e metadata (sem embedding para evitar erros de conversão)
      *
      * @param queryEmbedding Embedding da pergunta
      * @param topK Número de resultados
-     * @return Lista de chunks mais similares
+     * @return Lista de arrays com [id, content, metadata, chunk_index, document_id, created_at, document_filename]
      */
     @Query(value = """
-        SELECT c.*
+        SELECT c.id, c.content, c.metadata, c.chunk_index, c.document_id, c.created_at, d.filename
         FROM chunks c
+        JOIN documents d ON c.document_id = d.id
         ORDER BY c.embedding <=> CAST(:queryEmbedding AS vector)
         LIMIT :topK
         """, nativeQuery = true)
-    List<Chunk> findTopKSimilarChunks(
-        @Param("queryEmbedding") PGvector queryEmbedding,
+    List<Object[]> findTopKSimilarChunks(
+        @Param("queryEmbedding") String queryEmbedding,
         @Param("topK") int topK
     );
 
@@ -82,7 +85,9 @@ public interface ChunkRepository extends JpaRepository<Chunk, Long> {
      *
      * @param documentId ID do documento
      */
-    void deleteByDocumentId(Long documentId);
+    @Modifying
+    @Query("DELETE FROM Chunk c WHERE c.document.id = :documentId")
+    void deleteByDocumentId(@Param("documentId") Long documentId);
 
     /**
      * Verifica se existe algum chunk com embedding nulo
