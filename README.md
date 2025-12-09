@@ -83,32 +83,61 @@ docker exec helpdesk-ai-db psql -U postgres -d helpdesk_ai -c "\dx"
 
 ### 3. Configurar Backend
 
-> Nota: o Maven usa o toolchain em `.mvn/toolchains.xml` apontando para `C:\Program Files\Eclipse Adoptium\jdk-21.0.9.10-hotspot`. Ajuste o caminho se instalou o JDK 21 em outro diretório.
+> Nota: o Maven usa o toolchain em `backend/.mvn/toolchains.xml` apontando para `C:\Program Files\Eclipse Adoptium\jdk-21.0.9.10-hotspot`. Ajuste o caminho se instalou o JDK 21 em outro diretório.
 
-Criar arquivo `backend/.env`:
+#### Configurar Variáveis de Ambiente
 
+1. **Copiar template de configuração**:
 ```bash
+cd backend
+cp .env.example .env
+```
+
+2. **Editar `backend/.env` com suas credenciais**:
+```bash
+# Database (default values for local Docker)
 DB_HOST=localhost
 DB_PORT=5433
 DB_NAME=helpdesk_ai
 DB_USER=postgres
 DB_PASSWORD=postgres
-OPENAI_API_KEY=sk-your-openai-api-key-here
-JWT_SECRET=your-256-bit-secret-key-change-in-production-please
+
+# OpenAI API - OBRIGATÓRIO
+# Obtenha sua chave em: https://platform.openai.com/api-keys
+OPENAI_API_KEY=sk-proj-your-actual-openai-api-key-here
+
+# JWT Secret - IMPORTANTE: Gerar chave forte para produção
+# Gerar com: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=your-secure-random-jwt-secret-at-least-64-chars-hexadecimal
+
+# Server
 PORT=8080
 SPRING_PROFILES_ACTIVE=dev
 ```
 
-**Windows**: Executar com script que carrega variáveis:
-```bash
+⚠️ **IMPORTANTE**:
+- Nunca commite o arquivo `.env` (já está no `.gitignore`)
+- O `JWT_SECRET` deve ser gerado com 512 bits (128 caracteres hex) para máxima segurança
+- Para produção, use credenciais de banco de dados fortes
+
+#### Executar Backend
+
+**Windows**: Executar com script PowerShell que carrega variáveis:
+```powershell
 cd backend
 .\run.ps1
 ```
 
-**Linux/Mac**: Executar diretamente:
+O script `run.ps1`:
+- Carrega automaticamente variáveis do arquivo `.env`
+- Valida que `OPENAI_API_KEY` está configurada
+- Usa o toolchain Maven correto para Java 21
+
+**Linux/Mac**: Exportar variáveis e executar:
 ```bash
 cd backend
-mvn spring-boot:run
+export $(cat .env | xargs)
+mvn -t ../.mvn/toolchains.xml spring-boot:run
 ```
 
 Swagger UI disponível em: `http://localhost:8080/api/swagger-ui.html`
@@ -286,12 +315,22 @@ USING hnsw (embedding vector_cosine_ops);
 
 ## 🔐 Segurança
 
-- Autenticação JWT
-- Rate limiting (OpenAI API)
-- Validação de MIME types (apenas PDFs)
-- Limite de tamanho de arquivo (50MB)
-- CORS configurado
-- Hashing bcrypt para senhas
+- **Autenticação JWT**: Tokens stateless com secret de 512 bits
+- **Password Hashing**: BCrypt com strength 12
+- **CORS**: Configurado para origins específicas
+- **File Upload**:
+  - Validação de MIME types (apenas PDFs)
+  - Limite de 50MB por arquivo
+- **Environment Variables**: Secrets nunca commitados (`.env` no `.gitignore`)
+- **Rate Limiting**: Configurado para OpenAI API (50 calls/min)
+- **Input Validation**: Spring Validation em todos os endpoints
+
+### Boas Práticas
+
+⚠️ **NUNCA commite o arquivo `.env`** - Ele contém suas credenciais sensíveis
+✅ Use `.env.example` como template
+✅ Gere `JWT_SECRET` forte com `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
+✅ Em produção, use variáveis de ambiente do provider (Railway, Vercel, etc)
 
 ## 💰 Custos Estimados
 
