@@ -79,7 +79,7 @@ helpdesk:
   # Retrieval
   retrieval:
     top-k: 5                     # Número de chunks mais similares
-    similarity-threshold: 0.7    # Score mínimo de similaridade (0-1)
+    similarity-threshold: 0.3    # Score mínimo de similaridade (0-1)
 
   # Rate Limiting
   rate-limit:
