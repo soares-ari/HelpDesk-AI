@@ -1,9 +1,11 @@
 package com.helpdeskai.entity;
 
+import com.helpdeskai.config.VectorType;
 import com.pgvector.PGvector;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
@@ -37,7 +39,7 @@ public class Chunk {
      * Usa pgvector para armazenamento e busca eficiente
      */
     @Column(name = "embedding", columnDefinition = "vector(1536)")
-    @JdbcTypeCode(SqlTypes.VECTOR)
+    @Type(VectorType.class)
     private PGvector embedding;
 
     @Column(name = "chunk_index")

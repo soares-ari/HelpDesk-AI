@@ -79,6 +79,13 @@
             <version>0.1.4</version>
         </dependency>
 
+        <!-- Hypersistence Utils (JSONB support for Hibernate 6) -->
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-63</artifactId>
+            <version>3.7.3</version>
+        </dependency>
+
         <!-- Apache Tika (PDF extraction) -->
         <dependency>
             <groupId>org.apache.tika</groupId>
